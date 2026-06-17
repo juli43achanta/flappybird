@@ -172,19 +172,31 @@ public class SceneSetupEditor : EditorWindow
 
     static Texture2D MakeGroundTex()
     {
-        int w = 64, h = 32;
+        int w = 64, h = 128;
         Texture2D tex = new Texture2D(w, h);
         Color marron = new Color(0.55f, 0.35f, 0.15f);
         Color verde = new Color(0.3f, 0.7f, 0.2f);
+        Color verdeOsc = new Color(0.2f, 0.55f, 0.15f);
 
         for (int y = 0; y < h; y++)
         {
             for (int x = 0; x < w; x++)
             {
-                if (y >= 24)
-                    tex.SetPixel(x, y, verde);
+                // Parte de arriba: cesped con borde
+                if (y >= h - 24)
+                {
+                    if (y >= h - 4 || x < 2 || x > w - 3)
+                        tex.SetPixel(x, y, verdeOsc);
+                    else
+                        tex.SetPixel(x, y, verde);
+                }
                 else
-                    tex.SetPixel(x, y, marron);
+                {
+                    // Tierra con variacion
+                    float ruido = Random.Range(-0.03f, 0.03f);
+                    Color c = new Color(marron.r + ruido, marron.g + ruido, marron.b + ruido);
+                    tex.SetPixel(x, y, c);
+                }
             }
         }
         tex.Apply();
