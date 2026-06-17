@@ -44,6 +44,13 @@ public class BirdController : MonoBehaviour
         // Rotacion del pajaro segun velocidad
         float angulo = Mathf.Clamp(rb.linearVelocity.y * velRotacion, -90f, -25f);
         transform.rotation = Quaternion.Euler(0, 0, angulo);
+
+        // Morir si se sale de la pantalla
+        if (transform.position.y < -5.5f || transform.position.y > 5.5f)
+        {
+            muerto = true;
+            gm.Morir();
+        }
     }
 
     void OnCollisionEnter2D(Collision2D col)
