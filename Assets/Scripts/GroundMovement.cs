@@ -2,33 +2,37 @@ using UnityEngine;
 
 public class GroundMovement : MonoBehaviour
 {
-    [SerializeField] private float speed = 3f;
-    [SerializeField] private Transform secondGround;
+    public float velocidad = 3f;
+    public GameObject otroSuelo;
 
-    private float groundWidth;
-    private Vector3 startPos;
+    float ancho;
 
-    private void Start()
+    void Start()
     {
-        startPos = transform.position;
-        groundWidth = GetComponent<SpriteRenderer>().bounds.size.x;
+        ancho = GetComponent<SpriteRenderer>().bounds.size.x;
     }
 
-    private void Update()
+    void Update()
     {
-        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+        if (GameManager.instance == null) return;
+        if (!GameManager.instance.jugando) return;
 
-        transform.position += Vector3.left * speed * Time.deltaTime;
-        if (secondGround != null)
-            secondGround.position += Vector3.left * speed * Time.deltaTime;
+        // Mover suelos
+        transform.position += Vector3.left * velocidad * Time.deltaTime;
 
-        if (transform.position.x <= startPos.x - groundWidth)
+        if (otroSuelo != null)
+            otroSuelo.transform.position += Vector3.left * velocidad * Time.deltaTime;
+
+        // Loop infinito
+        if (transform.position.x <= -ancho)
         {
-            transform.position = secondGround.position + Vector3.right * groundWidth;
+            if (otroSuelo != null)
+                transform.position = new Vector3(otroSuelo.transform.position.x + ancho, transform.position.y, transform.position.z);
         }
-        if (secondGround != null && secondGround.position.x <= startPos.x - groundWidth)
+
+        if (otroSuelo != null && otroSuelo.transform.position.x <= -ancho)
         {
-            secondGround.position = transform.position + Vector3.right * groundWidth;
+            otroSuelo.transform.position = new Vector3(transform.position.x + ancho, otroSuelo.transform.position.y, otroSuelo.transform.position.z);
         }
     }
 }

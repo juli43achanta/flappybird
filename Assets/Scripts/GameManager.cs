@@ -1,58 +1,67 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-
-public enum GameState
-{
-    Ready,
-    Playing,
-    GameOver
-}
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+    public static GameManager instance;
 
-    public GameState CurrentState { get; private set; } = GameState.Ready;
-    public int Score { get; private set; }
+    public Text scoreText;
+    public Text gameOverText;
+    public Text restartText;
 
-    public static System.Action<int> OnScoreChanged;
-    public static System.Action<GameState> OnStateChanged;
+    public int score;
+    public bool jugando;
+    public bool gameOver;
 
-    private void Awake()
+    void Awake()
     {
-        if (Instance != null && Instance != this)
+        instance = this;
+    }
+
+    void Start()
+    {
+        jugando = false;
+        gameOver = false;
+        score = 0;
+
+        if (scoreText != null)
+            scoreText.text = "" + score;
+
+        if (gameOverText != null)
+            gameOverText.gameObject.SetActive(false);
+
+        if (restartText != null)
+            restartText.gameObject.SetActive(false);
+    }
+
+    public void SumarPunto()
+    {
+        score++;
+        if (scoreText != null)
+            scoreText.text = "" + score;
+    }
+
+    public void Morir()
+    {
+        gameOver = true;
+        jugando = false;
+
+        if (gameOverText != null)
+            gameOverText.gameObject.SetActive(true);
+
+        if (restartText != null)
+            restartText.gameObject.SetActive(true);
+    }
+
+    void Update()
+    {
+        if (gameOver)
         {
-            Destroy(gameObject);
-            return;
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
         }
-        Instance = this;
-    }
-
-    private void Start()
-    {
-        OnStateChanged?.Invoke(CurrentState);
-    }
-
-    public void StartGame()
-    {
-        CurrentState = GameState.Playing;
-        OnStateChanged?.Invoke(CurrentState);
-    }
-
-    public void AddScore()
-    {
-        Score++;
-        OnScoreChanged?.Invoke(Score);
-    }
-
-    public void GameOver()
-    {
-        CurrentState = GameState.GameOver;
-        OnStateChanged?.Invoke(CurrentState);
-    }
-
-    public void Restart()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

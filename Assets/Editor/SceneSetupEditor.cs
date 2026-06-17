@@ -4,270 +4,232 @@ using UnityEngine.UI;
 
 public class SceneSetupEditor : EditorWindow
 {
-    private const string PrefabPath = "Assets/Prefabs/PipePair.prefab";
-
     [MenuItem("Tools/Flappy Bird/Setup Scene")]
-    public static void SetupScene()
+    static void SetupScene()
     {
-        if (EditorApplication.isPlaying)
-        {
-            Debug.LogWarning("Stop the game before setting up the scene.");
-            return;
-        }
-
-        CreateSpritesFolder();
-        SetupCamera();
-        SetupBackground();
-        SetupGround();
-        GameObject bird = SetupBird();
-        GameObject pipeSpawner = SetupPipeSpawner();
-        SetupCanvas();
-        SetupGameManager(bird, pipeSpawner);
-
-        Selection.activeGameObject = bird;
-
-        Debug.Log("Flappy Bird scene setup complete! Press Play to start.");
-    }
-
-    private static void CreateSpritesFolder()
-    {
+        // Crear carpetas
         if (!AssetDatabase.IsValidFolder("Assets/Sprites"))
             AssetDatabase.CreateFolder("Assets", "Sprites");
         if (!AssetDatabase.IsValidFolder("Assets/Prefabs"))
             AssetDatabase.CreateFolder("Assets", "Prefabs");
-    }
 
-    private static Texture2D CreateColoredTexture(int width, int height, Color color, string name)
-    {
-        Texture2D tex = new Texture2D(width, height);
-        Color[] pixels = new Color[width * height];
-        for (int i = 0; i < pixels.Length; i++)
-            pixels[i] = color;
-        tex.SetPixels(pixels);
-        tex.Apply();
-        string path = $"Assets/Sprites/{name}.png";
-        System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
-        AssetDatabase.ImportAsset(path);
-        TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-        if (importer != null)
-        {
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spritePixelsPerUnit = 100;
-            importer.SaveAndReimport();
-        }
-        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-    }
-
-    private static void SetupCamera()
-    {
+        // Camara
         Camera cam = Camera.main;
         if (cam == null)
         {
-            GameObject camGO = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
-            cam = camGO.GetComponent<Camera>();
-            camGO.tag = "MainCamera";
+            GameObject c = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+            c.tag = "MainCamera";
+            cam = c.GetComponent<Camera>();
         }
         cam.orthographic = true;
         cam.orthographicSize = 5f;
         cam.backgroundColor = new Color(0.5f, 0.8f, 1f);
         cam.transform.position = new Vector3(0, 0, -10);
         cam.clearFlags = CameraClearFlags.SolidColor;
-    }
 
-    private static void SetupBackground()
-    {
-        GameObject bg = GameObject.Find("Background");
-        if (bg != null) return;
+        // Fondo
+        if (GameObject.Find("Background") == null)
+        {
+            Texture2D texF = MakeTexture(800, 600, new Color(0.5f, 0.8f, 1f), "Background");
+            Sprite sprF = Sprite.Create(texF, new Rect(0, 0, texF.width, texF.height), new Vector2(0.5f, 0.5f), 100);
+            GameObject bg = new GameObject("Background", typeof(SpriteRenderer));
+            bg.GetComponent<SpriteRenderer>().sprite = sprF;
+            bg.GetComponent<SpriteRenderer>().sortingOrder = -10;
+            bg.transform.position = new Vector3(0, 0, 1);
+            bg.transform.localScale = new Vector3(25f, 15f, 1);
+        }
 
-        Texture2D bgTex = CreateColoredTexture(800, 600, new Color(0.5f, 0.8f, 1f), "Background");
-        bg = new GameObject("Background", typeof(SpriteRenderer));
-        Sprite bgSprite = Sprite.Create(bgTex, new Rect(0, 0, bgTex.width, bgTex.height), new Vector2(0.5f, 0.5f), 100);
-        bg.GetComponent<SpriteRenderer>().sprite = bgSprite;
-        bg.GetComponent<SpriteRenderer>().sortingOrder = -10;
-        bg.transform.position = new Vector3(0, 0, 1);
-        bg.transform.localScale = new Vector3(25f, 15f, 1);
-    }
+        // Suelo
+        if (GameObject.Find("Ground1") == null)
+        {
+            Texture2D texG = MakeTexture(64, 32, new Color(0.6f, 0.4f, 0.2f), "Ground");
+            Sprite sprG = Sprite.Create(texG, new Rect(0, 0, texG.width, texG.height), new Vector2(0.5f, 0.5f), 64);
 
-    private static void SetupGround()
-    {
-        if (GameObject.Find("Ground1") != null) return;
+            GameObject g1 = new GameObject("Ground1", typeof(SpriteRenderer), typeof(BoxCollider2D));
+            g1.GetComponent<SpriteRenderer>().sprite = sprG;
+            g1.GetComponent<SpriteRenderer>().sortingOrder = 5;
+            g1.GetComponent<BoxCollider2D>().size = new Vector2(20, 2);
+            g1.transform.position = new Vector3(0, -4.5f, 0);
 
-        Texture2D groundTex = CreateColoredTexture(64, 32, new Color(0.6f, 0.4f, 0.2f), "Ground");
-        Sprite groundSprite = Sprite.Create(groundTex, new Rect(0, 0, groundTex.width, groundTex.height), new Vector2(0.5f, 0.5f), 64);
+            GameObject g2 = new GameObject("Ground2", typeof(SpriteRenderer), typeof(BoxCollider2D));
+            g2.GetComponent<SpriteRenderer>().sprite = sprG;
+            g2.GetComponent<SpriteRenderer>().sortingOrder = 5;
+            g2.GetComponent<BoxCollider2D>().size = new Vector2(20, 2);
+            g2.transform.position = new Vector3(20, -4.5f, 0);
 
-        GameObject ground1 = new GameObject("Ground1", typeof(SpriteRenderer), typeof(BoxCollider2D));
-        ground1.GetComponent<SpriteRenderer>().sprite = groundSprite;
-        ground1.GetComponent<SpriteRenderer>().sortingOrder = 5;
-        ground1.GetComponent<BoxCollider2D>().size = new Vector2(20, 2);
-        ground1.transform.position = new Vector3(0, -4.5f, 0);
-        ground1.transform.localScale = new Vector3(1, 1, 1);
+            GroundMovement gm1 = g1.AddComponent<GroundMovement>();
+            gm1.velocidad = 3f;
+            gm1.otroSuelo = g2;
+            g2.AddComponent<GroundMovement>();
+        }
 
-        GameObject ground2 = new GameObject("Ground2", typeof(SpriteRenderer), typeof(BoxCollider2D));
-        ground2.GetComponent<SpriteRenderer>().sprite = groundSprite;
-        ground2.GetComponent<SpriteRenderer>().sortingOrder = 5;
-        ground2.GetComponent<BoxCollider2D>().size = new Vector2(20, 2);
-        ground2.transform.position = new Vector3(20, -4.5f, 0);
-        ground2.transform.localScale = new Vector3(1, 1, 1);
+        // Pajaro
+        GameObject pajaro = GameObject.Find("Bird");
+        if (pajaro == null)
+        {
+            Texture2D texB = MakeTexture(32, 32, Color.yellow, "Bird");
+            Sprite sprB = Sprite.Create(texB, new Rect(0, 0, texB.width, texB.height), new Vector2(0.5f, 0.5f), 100);
 
-        GroundMovement gm = ground1.AddComponent<GroundMovement>();
-        ground2.AddComponent<GroundMovement>();
-        SerializedObject so = new SerializedObject(gm);
-        so.FindProperty("secondGround").objectReferenceValue = ground2.transform;
-        so.ApplyModifiedProperties();
-    }
+            pajaro = new GameObject("Bird", typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(CircleCollider2D));
+            pajaro.GetComponent<SpriteRenderer>().sprite = sprB;
+            pajaro.GetComponent<SpriteRenderer>().sortingOrder = 10;
+            pajaro.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezePositionX;
+            pajaro.GetComponent<Rigidbody2D>().mass = 0.5f;
+            pajaro.GetComponent<CircleCollider2D>().radius = 0.4f;
+            pajaro.AddComponent<BirdController>();
+            pajaro.transform.position = new Vector3(-3, 0, 0);
+            pajaro.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+        }
 
-    private static GameObject SetupBird()
-    {
-        GameObject bird = GameObject.Find("Bird");
-        if (bird != null) return bird;
+        // Prefab tuberia
+        string pathPrefab = "Assets/Prefabs/PipePair.prefab";
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(pathPrefab) == null)
+        {
+            Texture2D texP = MakeTexture(52, 320, Color.green, "Pipe");
+            Sprite sprP = Sprite.Create(texP, new Rect(0, 0, texP.width, texP.height), new Vector2(0.5f, 0.5f), 100);
 
-        Texture2D birdTex = CreateColoredTexture(32, 32, Color.yellow, "Bird");
-        Sprite birdSprite = Sprite.Create(birdTex, new Rect(0, 0, birdTex.width, birdTex.height), new Vector2(0.5f, 0.5f), 100);
+            GameObject top = new GameObject("TopPipe", typeof(SpriteRenderer), typeof(BoxCollider2D));
+            top.GetComponent<SpriteRenderer>().sprite = sprP;
+            top.GetComponent<SpriteRenderer>().sortingOrder = 1;
+            top.GetComponent<BoxCollider2D>().size = new Vector2(1, 3.2f);
 
-        bird = new GameObject("Bird", typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(CircleCollider2D));
-        bird.GetComponent<SpriteRenderer>().sprite = birdSprite;
-        bird.GetComponent<SpriteRenderer>().sortingOrder = 10;
-        bird.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezePositionX;
-        bird.GetComponent<Rigidbody2D>().mass = 0.5f;
-        bird.GetComponent<CircleCollider2D>().radius = 0.4f;
-        bird.AddComponent<BirdController>();
-        bird.transform.position = new Vector3(-3, 0, 0);
-        bird.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+            GameObject bot = new GameObject("BottomPipe", typeof(SpriteRenderer), typeof(BoxCollider2D));
+            bot.GetComponent<SpriteRenderer>().sprite = sprP;
+            bot.GetComponent<SpriteRenderer>().sortingOrder = 1;
+            bot.GetComponent<BoxCollider2D>().size = new Vector2(1, 3.2f);
 
-        return bird;
-    }
+            GameObject trigger = new GameObject("ScoreTrigger", typeof(BoxCollider2D));
+            trigger.GetComponent<BoxCollider2D>().isTrigger = true;
+            trigger.GetComponent<BoxCollider2D>().size = new Vector2(0.5f, 4f);
 
-    private static void CreatePipePrefab()
-    {
-        if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
-            return;
+            GameObject pair = new GameObject("PipePair");
+            top.transform.SetParent(pair.transform);
+            bot.transform.SetParent(pair.transform);
+            trigger.transform.SetParent(pair.transform);
+            pair.AddComponent<PipePair>();
 
-        Texture2D pipeTex = CreateColoredTexture(52, 320, Color.green, "Pipe");
-        Sprite pipeSprite = Sprite.Create(pipeTex, new Rect(0, 0, pipeTex.width, pipeTex.height), new Vector2(0.5f, 0.5f), 100);
+            PrefabUtility.SaveAsPrefabAsset(pair, pathPrefab);
+            DestroyImmediate(pair);
+        }
 
-        GameObject topPipe = new GameObject("TopPipe", typeof(SpriteRenderer), typeof(BoxCollider2D));
-        topPipe.GetComponent<SpriteRenderer>().sprite = pipeSprite;
-        topPipe.GetComponent<SpriteRenderer>().sortingOrder = 1;
-        topPipe.GetComponent<BoxCollider2D>().size = new Vector2(1, 3.2f);
-
-        GameObject bottomPipe = new GameObject("BottomPipe", typeof(SpriteRenderer), typeof(BoxCollider2D));
-        bottomPipe.GetComponent<SpriteRenderer>().sprite = pipeSprite;
-        bottomPipe.GetComponent<SpriteRenderer>().sortingOrder = 1;
-        bottomPipe.GetComponent<BoxCollider2D>().size = new Vector2(1, 3.2f);
-
-        GameObject scoreTrigger = new GameObject("ScoreTrigger", typeof(BoxCollider2D));
-        scoreTrigger.GetComponent<BoxCollider2D>().isTrigger = true;
-        scoreTrigger.GetComponent<BoxCollider2D>().size = new Vector2(0.5f, 4f);
-
-        GameObject pipePair = new GameObject("PipePair");
-        topPipe.transform.SetParent(pipePair.transform);
-        bottomPipe.transform.SetParent(pipePair.transform);
-        scoreTrigger.transform.SetParent(pipePair.transform);
-
-        PipePair pairComponent = pipePair.AddComponent<PipePair>();
-
-        SerializedObject so = new SerializedObject(pairComponent);
-        so.FindProperty("topPipe").objectReferenceValue = topPipe.transform;
-        so.FindProperty("bottomPipe").objectReferenceValue = bottomPipe.transform;
-        so.FindProperty("scoreTrigger").objectReferenceValue = scoreTrigger.transform;
-        so.ApplyModifiedProperties();
-
-        PrefabUtility.SaveAsPrefabAsset(pipePair, PrefabPath);
-        Object.DestroyImmediate(pipePair);
-    }
-
-    private static GameObject SetupPipeSpawner()
-    {
+        // Spawner
         GameObject spawner = GameObject.Find("PipeSpawner");
-        if (spawner != null) return spawner;
+        if (spawner == null)
+        {
+            spawner = new GameObject("PipeSpawner");
+            PipeSpawner ps = spawner.AddComponent<PipeSpawner>();
+            ps.prefabTuberia = AssetDatabase.LoadAssetAtPath<GameObject>(pathPrefab);
+            ps.intervalo = 1.5f;
+            ps.velocidad = 3f;
+            ps.minY = -2f;
+            ps.maxY = 2f;
+            ps.espacio = 2.2f;
+            spawner.transform.position = new Vector3(8, 0, 0);
+        }
 
-        CreatePipePrefab();
+        // Canvas y textos
+        if (FindObjectOfType<Canvas>() == null)
+        {
+            GameObject canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            Canvas canvas = canvasGO.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        spawner = new GameObject("PipeSpawner");
-        PipeSpawner ps = spawner.AddComponent<PipeSpawner>();
-        spawner.transform.position = new Vector3(8, 0, 0);
+            CanvasScaler scaler = canvasGO.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
 
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-        SerializedObject so = new SerializedObject(ps);
-        so.FindProperty("pipePrefab").objectReferenceValue = prefab;
-        so.ApplyModifiedProperties();
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-        return spawner;
+            // Score
+            GameObject sGO = new GameObject("ScoreText", typeof(Text));
+            sGO.transform.SetParent(canvasGO.transform);
+            Text sText = sGO.GetComponent<Text>();
+            sText.text = "0";
+            sText.font = font;
+            sText.fontSize = 72;
+            sText.alignment = TextAnchor.UpperCenter;
+            sText.color = Color.white;
+            RectTransform sRT = sGO.GetComponent<RectTransform>();
+            sRT.anchorMin = new Vector2(0.5f, 1);
+            sRT.anchorMax = new Vector2(0.5f, 1);
+            sRT.pivot = new Vector2(0.5f, 1);
+            sRT.anchoredPosition = new Vector2(0, -50);
+
+            // Game Over
+            GameObject goGO = new GameObject("GameOverText", typeof(Text));
+            goGO.transform.SetParent(canvasGO.transform);
+            Text goText = goGO.GetComponent<Text>();
+            goText.text = "GAME OVER";
+            goText.font = font;
+            goText.fontSize = 64;
+            goText.alignment = TextAnchor.MiddleCenter;
+            goText.color = Color.red;
+            goText.gameObject.SetActive(false);
+            RectTransform goRT = goGO.GetComponent<RectTransform>();
+            goRT.anchorMin = new Vector2(0.5f, 0.5f);
+            goRT.anchorMax = new Vector2(0.5f, 0.5f);
+            goRT.pivot = new Vector2(0.5f, 0.5f);
+            goRT.anchoredPosition = new Vector2(0, 50);
+
+            // Restart
+            GameObject rGO = new GameObject("RestartText", typeof(Text));
+            rGO.transform.SetParent(canvasGO.transform);
+            Text rText = rGO.GetComponent<Text>();
+            rText.text = "Press SPACE or Click";
+            rText.font = font;
+            rText.fontSize = 36;
+            rText.alignment = TextAnchor.MiddleCenter;
+            rText.color = Color.white;
+            rText.gameObject.SetActive(false);
+            RectTransform rRT = rGO.GetComponent<RectTransform>();
+            rRT.anchorMin = new Vector2(0.5f, 0.5f);
+            rRT.anchorMax = new Vector2(0.5f, 0.5f);
+            rRT.pivot = new Vector2(0.5f, 0.5f);
+            rRT.anchoredPosition = new Vector2(0, -20);
+
+            // Asignar textos al GameManager
+            GameManager gm = FindObjectOfType<GameManager>();
+            if (gm == null)
+            {
+                GameObject gmGO = new GameObject("GameManager");
+                gm = gmGO.AddComponent<GameManager>();
+            }
+            gm.scoreText = sText;
+            gm.gameOverText = goText;
+            gm.restartText = rText;
+        }
+        else
+        {
+            // Asegurar GameManager si no existe
+            if (FindObjectOfType<GameManager>() == null)
+            {
+                GameObject gmGO = new GameObject("GameManager");
+                gmGO.AddComponent<GameManager>();
+            }
+        }
+
+        Selection.activeGameObject = pajaro;
+        Debug.Log("Escena lista! Presiona Play para jugar.");
     }
 
-    private static void SetupCanvas()
+    static Texture2D MakeTexture(int w, int h, Color c, string nombre)
     {
-        Canvas canvas = FindObjectOfType<Canvas>();
-        if (canvas != null) return;
-
-        GameObject canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvas = canvasGO.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-
-        CanvasScaler scaler = canvasGO.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
-        GameObject scoreGO = new GameObject("ScoreText", typeof(Text));
-        scoreGO.transform.SetParent(canvasGO.transform);
-        Text scoreText = scoreGO.GetComponent<Text>();
-        scoreText.text = "0";
-        scoreText.font = font;
-        scoreText.fontSize = 72;
-        scoreText.alignment = TextAnchor.UpperCenter;
-        scoreText.color = Color.white;
-        RectTransform scoreRT = scoreGO.GetComponent<RectTransform>();
-        scoreRT.anchorMin = new Vector2(0.5f, 1);
-        scoreRT.anchorMax = new Vector2(0.5f, 1);
-        scoreRT.pivot = new Vector2(0.5f, 1);
-        scoreRT.anchoredPosition = new Vector2(0, -50);
-
-        GameObject gameOverGO = new GameObject("GameOverText", typeof(Text));
-        gameOverGO.transform.SetParent(canvasGO.transform);
-        Text gameOverText = gameOverGO.GetComponent<Text>();
-        gameOverText.text = "GAME OVER";
-        gameOverText.font = font;
-        gameOverText.fontSize = 64;
-        gameOverText.alignment = TextAnchor.MiddleCenter;
-        gameOverText.color = Color.red;
-        gameOverText.gameObject.SetActive(false);
-        RectTransform goRT = gameOverGO.GetComponent<RectTransform>();
-        goRT.anchorMin = new Vector2(0.5f, 0.5f);
-        goRT.anchorMax = new Vector2(0.5f, 0.5f);
-        goRT.pivot = new Vector2(0.5f, 0.5f);
-        goRT.anchoredPosition = new Vector2(0, 50);
-
-        GameObject restartGO = new GameObject("RestartText", typeof(Text));
-        restartGO.transform.SetParent(canvasGO.transform);
-        Text restartText = restartGO.GetComponent<Text>();
-        restartText.text = "Press SPACE or Click to Restart";
-        restartText.font = font;
-        restartText.fontSize = 36;
-        restartText.alignment = TextAnchor.MiddleCenter;
-        restartText.color = Color.white;
-        restartText.gameObject.SetActive(false);
-        RectTransform rRT = restartGO.GetComponent<RectTransform>();
-        rRT.anchorMin = new Vector2(0.5f, 0.5f);
-        rRT.anchorMax = new Vector2(0.5f, 0.5f);
-        rRT.pivot = new Vector2(0.5f, 0.5f);
-        rRT.anchoredPosition = new Vector2(0, -20);
-
-        ScoreUI scoreUI = canvasGO.AddComponent<ScoreUI>();
-        SerializedObject so = new SerializedObject(scoreUI);
-        so.FindProperty("scoreText").objectReferenceValue = scoreText;
-        so.FindProperty("gameOverText").objectReferenceValue = gameOverText;
-        so.FindProperty("restartText").objectReferenceValue = restartText;
-        so.ApplyModifiedProperties();
-    }
-
-    private static void SetupGameManager(GameObject bird, GameObject pipeSpawner)
-    {
-        GameObject gmGO = GameObject.Find("GameManager");
-        if (gmGO != null) return;
-
-        gmGO = new GameObject("GameManager");
-        gmGO.AddComponent<GameManager>();
+        Texture2D tex = new Texture2D(w, h);
+        Color[] pix = new Color[w * h];
+        for (int i = 0; i < pix.Length; i++)
+            pix[i] = c;
+        tex.SetPixels(pix);
+        tex.Apply();
+        string path = "Assets/Sprites/" + nombre + ".png";
+        System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+        AssetDatabase.ImportAsset(path);
+        TextureImporter imp = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (imp != null)
+        {
+            imp.textureType = TextureImporterType.Sprite;
+            imp.spritePixelsPerUnit = 100;
+            imp.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 }

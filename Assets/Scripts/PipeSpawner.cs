@@ -2,38 +2,45 @@ using UnityEngine;
 
 public class PipeSpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject pipePrefab;
-    [SerializeField] private float spawnInterval = 1.5f;
-    [SerializeField] private float pipeSpeed = 3f;
-    [SerializeField] private float minY = -2f;
-    [SerializeField] private float maxY = 2f;
-    [SerializeField] private float gapSize = 2.2f;
+    public GameObject prefabTuberia;
+    public float intervalo = 1.5f;
+    public float velocidad = 3f;
+    public float minY = -2f;
+    public float maxY = 2f;
+    public float espacio = 2.2f;
 
-    private float timer;
+    float timer;
 
-    private void Update()
+    void Update()
     {
-        if (GameManager.Instance.CurrentState != GameState.Playing) return;
+        if (GameManager.instance == null) return;
+        if (!GameManager.instance.jugando) return;
 
         timer += Time.deltaTime;
-        if (timer >= spawnInterval)
+
+        if (timer >= intervalo)
         {
-            SpawnPipe();
+            float y = Random.Range(minY, maxY);
+            Vector3 pos = new Vector3(transform.position.x, y, 0);
+
+            GameObject tubo = Instantiate(prefabTuberia, pos, Quaternion.identity);
+
+            // Poner el hueco entre tuberias
+            Transform top = tubo.transform.Find("TopPipe");
+            Transform bot = tubo.transform.Find("BottomPipe");
+
+            if (top != null)
+                top.localPosition = new Vector3(0, espacio / 2f, 0);
+
+            if (bot != null)
+                bot.localPosition = new Vector3(0, -espacio / 2f, 0);
+
+            // Asignar velocidad
+            PipePair pp = tubo.GetComponent<PipePair>();
+            if (pp != null)
+                pp.velocidad = velocidad;
+
             timer = 0;
-        }
-    }
-
-    private void SpawnPipe()
-    {
-        float yPos = Random.Range(minY, maxY);
-        Vector2 spawnPos = new Vector2(transform.position.x, yPos);
-        GameObject pipe = Instantiate(pipePrefab, spawnPos, Quaternion.identity);
-
-        PipePair pair = pipe.GetComponent<PipePair>();
-        if (pair != null)
-        {
-            pair.speed = pipeSpeed;
-            pair.gapSize = gapSize;
         }
     }
 }

@@ -1,73 +1,69 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
 public class BirdController : MonoBehaviour
 {
-    [SerializeField] private float flapForce = 6f;
-    [SerializeField] private float rotationSpeed = 8f;
-    [SerializeField] private float maxTiltUp = -25f;
-    [SerializeField] private float maxTiltDown = -90f;
+    public float fuerzaSalto = 6f;
+    public float velRotacion = 8f;
 
-    private Rigidbody2D rb;
-    private bool isDead;
+    Rigidbody2D rb;
+    bool muerto;
+    GameManager gm;
 
-    private void Awake()
+    void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0;
+        rb.gravityScale = 0f;
+
+        gm = FindObjectOfType<GameManager>();
     }
 
-    private void OnEnable()
+    void Update()
     {
-        GameManager.OnStateChanged += HandleStateChanged;
-    }
+        if (muerto) return;
+        if (gm == null) return;
 
-    private void OnDisable()
-    {
-        GameManager.OnStateChanged -= HandleStateChanged;
-    }
+        if (gm.gameOver) return;
 
-    private void HandleStateChanged(GameState state)
-    {
-        if (state == GameState.Playing)
+        // Estado inicial - esperando que empiece
+        if (!gm.jugando)
         {
-            rb.gravityScale = 1f;
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                gm.jugando = true;
+                rb.gravityScale = 1f;
+            }
+            return;
         }
-        else if (state == GameState.GameOver)
-        {
-            isDead = true;
-        }
-    }
 
-    private void Update()
-    {
-        if (isDead) return;
-        if (GameManager.Instance.CurrentState != GameState.Playing) return;
-
+        // Saltar
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
-            Flap();
+            rb.velocity = Vector2.up * fuerzaSalto;
         }
 
-        float angle = Mathf.Clamp(rb.linearVelocity.y * rotationSpeed, maxTiltDown, maxTiltUp);
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        // Rotacion del pajaro segun velocidad
+        float angulo = Mathf.Clamp(rb.velocity.y * velRotacion, -90f, -25f);
+        transform.rotation = Quaternion.Euler(0, 0, angulo);
     }
 
-    private void Flap()
+    void OnCollisionEnter2D(Collision2D col)
     {
-        rb.linearVelocity = Vector2.up * flapForce;
+        if (muerto) return;
+        if (gm == null) return;
+        if (gm.gameOver) return;
+
+        muerto = true;
+        gm.Morir();
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDead) return;
-        GameManager.Instance.GameOver();
-    }
+        if (muerto) return;
+        if (gm == null) return;
+        if (gm.gameOver) return;
+        if (!gm.jugando) return;
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (isDead) return;
-        GameManager.Instance.AddScore();
+        gm.SumarPunto();
         other.enabled = false;
     }
 }
