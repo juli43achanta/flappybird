@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using UnityEngine.UI;
 
 public class SceneSetupEditor : EditorWindow
 {
@@ -132,85 +131,11 @@ public class SceneSetupEditor : EditorWindow
         ps.maxY = 2f;
         ps.espacio = 2.2f;
 
-        // Canvas y textos
-        if (FindObjectOfType<Canvas>() == null)
+        // GameManager
+        if (FindObjectOfType<GameManager>() == null)
         {
-            GameObject canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            Canvas canvas = canvasGO.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-
-            CanvasScaler scaler = canvasGO.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
-            // Score
-            GameObject sGO = new GameObject("ScoreText", typeof(Text));
-            sGO.transform.SetParent(canvasGO.transform);
-            Text sText = sGO.GetComponent<Text>();
-            sText.text = "0";
-            sText.font = font;
-            sText.fontSize = 72;
-            sText.alignment = TextAnchor.UpperCenter;
-            sText.color = Color.white;
-            RectTransform sRT = sGO.GetComponent<RectTransform>();
-            sRT.anchorMin = new Vector2(0.5f, 1);
-            sRT.anchorMax = new Vector2(0.5f, 1);
-            sRT.pivot = new Vector2(0.5f, 1);
-            sRT.anchoredPosition = new Vector2(0, -50);
-
-            // Game Over
-            GameObject goGO = new GameObject("GameOverText", typeof(Text));
-            goGO.transform.SetParent(canvasGO.transform);
-            Text goText = goGO.GetComponent<Text>();
-            goText.text = "GAME OVER";
-            goText.font = font;
-            goText.fontSize = 64;
-            goText.alignment = TextAnchor.MiddleCenter;
-            goText.color = Color.red;
-            goText.gameObject.SetActive(false);
-            RectTransform goRT = goGO.GetComponent<RectTransform>();
-            goRT.anchorMin = new Vector2(0.5f, 0.5f);
-            goRT.anchorMax = new Vector2(0.5f, 0.5f);
-            goRT.pivot = new Vector2(0.5f, 0.5f);
-            goRT.anchoredPosition = new Vector2(0, 50);
-
-            // Restart
-            GameObject rGO = new GameObject("RestartText", typeof(Text));
-            rGO.transform.SetParent(canvasGO.transform);
-            Text rText = rGO.GetComponent<Text>();
-            rText.text = "Press SPACE or Click";
-            rText.font = font;
-            rText.fontSize = 36;
-            rText.alignment = TextAnchor.MiddleCenter;
-            rText.color = Color.white;
-            rText.gameObject.SetActive(false);
-            RectTransform rRT = rGO.GetComponent<RectTransform>();
-            rRT.anchorMin = new Vector2(0.5f, 0.5f);
-            rRT.anchorMax = new Vector2(0.5f, 0.5f);
-            rRT.pivot = new Vector2(0.5f, 0.5f);
-            rRT.anchoredPosition = new Vector2(0, -20);
-
-            // Asignar textos al GameManager
-            GameManager gm = FindObjectOfType<GameManager>();
-            if (gm == null)
-            {
-                GameObject gmGO = new GameObject("GameManager");
-                gm = gmGO.AddComponent<GameManager>();
-            }
-            gm.scoreText = sText;
-            gm.gameOverText = goText;
-            gm.restartText = rText;
-        }
-        else
-        {
-            // Asegurar GameManager si no existe
-            if (FindObjectOfType<GameManager>() == null)
-            {
-                GameObject gmGO = new GameObject("GameManager");
-                gmGO.AddComponent<GameManager>();
-            }
+            GameObject gmGO = new GameObject("GameManager");
+            gmGO.AddComponent<GameManager>();
         }
 
         Selection.activeGameObject = pajaro;
