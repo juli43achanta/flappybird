@@ -38,11 +38,11 @@ public class BirdController : MonoBehaviour
         // Saltar
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
-            rb.velocity = Vector2.up * fuerzaSalto;
+            rb.linearVelocity = Vector2.up * fuerzaSalto;
         }
 
         // Rotacion del pajaro segun velocidad
-        float angulo = Mathf.Clamp(rb.velocity.y * velRotacion, -90f, -25f);
+        float angulo = Mathf.Clamp(rb.linearVelocity.y * velRotacion, -90f, -25f);
         transform.rotation = Quaternion.Euler(0, 0, angulo);
     }
 
