@@ -121,15 +121,16 @@ public class SceneSetupEditor : EditorWindow
         if (spawner == null)
         {
             spawner = new GameObject("PipeSpawner");
-            PipeSpawner ps = spawner.AddComponent<PipeSpawner>();
-            ps.prefabTuberia = AssetDatabase.LoadAssetAtPath<GameObject>(pathPrefab);
-            ps.intervalo = 1.5f;
-            ps.velocidad = 3f;
-            ps.minY = -2f;
-            ps.maxY = 2f;
-            ps.espacio = 2.2f;
             spawner.transform.position = new Vector3(8, 0, 0);
         }
+        PipeSpawner ps = spawner.GetComponent<PipeSpawner>();
+        if (ps == null) ps = spawner.AddComponent<PipeSpawner>();
+        ps.prefabTuberia = AssetDatabase.LoadAssetAtPath<GameObject>(pathPrefab);
+        ps.intervalo = 1.5f;
+        ps.velocidad = 3f;
+        ps.minY = -2f;
+        ps.maxY = 2f;
+        ps.espacio = 2.2f;
 
         // Canvas y textos
         if (FindObjectOfType<Canvas>() == null)
