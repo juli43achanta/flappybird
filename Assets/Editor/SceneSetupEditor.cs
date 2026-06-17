@@ -30,7 +30,8 @@ public class SceneSetupEditor : EditorWindow
         // Fondo
         if (GameObject.Find("Background") == null)
         {
-            Texture2D texF = MakeTexture(800, 600, new Color(0.5f, 0.8f, 1f), "Background");
+            Texture2D texF = MakeBackgroundTex();
+            GuardarTextura(texF, "Background");
             Sprite sprF = Sprite.Create(texF, new Rect(0, 0, texF.width, texF.height), new Vector2(0.5f, 0.5f), 100);
             GameObject bg = new GameObject("Background", typeof(SpriteRenderer));
             bg.GetComponent<SpriteRenderer>().sprite = sprF;
@@ -42,7 +43,8 @@ public class SceneSetupEditor : EditorWindow
         // Suelo
         if (GameObject.Find("Ground1") == null)
         {
-            Texture2D texG = MakeTexture(64, 32, new Color(0.6f, 0.4f, 0.2f), "Ground");
+            Texture2D texG = MakeGroundTex();
+            GuardarTextura(texG, "Ground");
             Sprite sprG = Sprite.Create(texG, new Rect(0, 0, texG.width, texG.height), new Vector2(0.5f, 0.5f), 64);
 
             GameObject g1 = new GameObject("Ground1", typeof(SpriteRenderer), typeof(BoxCollider2D));
@@ -67,7 +69,8 @@ public class SceneSetupEditor : EditorWindow
         GameObject pajaro = GameObject.Find("Bird");
         if (pajaro == null)
         {
-            Texture2D texB = MakeTexture(32, 32, Color.yellow, "Bird");
+            Texture2D texB = MakeBirdTex();
+            GuardarTextura(texB, "Bird");
             Sprite sprB = Sprite.Create(texB, new Rect(0, 0, texB.width, texB.height), new Vector2(0.5f, 0.5f), 100);
 
             pajaro = new GameObject("Bird", typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(CircleCollider2D));
@@ -85,7 +88,8 @@ public class SceneSetupEditor : EditorWindow
         string pathPrefab = "Assets/Prefabs/PipePair.prefab";
         if (AssetDatabase.LoadAssetAtPath<GameObject>(pathPrefab) == null)
         {
-            Texture2D texP = MakeTexture(52, 320, Color.green, "Pipe");
+            Texture2D texP = MakePipeTex();
+            GuardarTextura(texP, "Pipe");
             Sprite sprP = Sprite.Create(texP, new Rect(0, 0, texP.width, texP.height), new Vector2(0.5f, 0.5f), 100);
 
             GameObject top = new GameObject("TopPipe", typeof(SpriteRenderer), typeof(BoxCollider2D));
@@ -212,14 +216,8 @@ public class SceneSetupEditor : EditorWindow
         Debug.Log("Escena lista! Presiona Play para jugar.");
     }
 
-    static Texture2D MakeTexture(int w, int h, Color c, string nombre)
+    static void GuardarTextura(Texture2D tex, string nombre)
     {
-        Texture2D tex = new Texture2D(w, h);
-        Color[] pix = new Color[w * h];
-        for (int i = 0; i < pix.Length; i++)
-            pix[i] = c;
-        tex.SetPixels(pix);
-        tex.Apply();
         string path = "Assets/Sprites/" + nombre + ".png";
         System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
         AssetDatabase.ImportAsset(path);
@@ -228,8 +226,149 @@ public class SceneSetupEditor : EditorWindow
         {
             imp.textureType = TextureImporterType.Sprite;
             imp.spritePixelsPerUnit = 100;
+            imp.alphaIsTransparency = true;
             imp.SaveAndReimport();
         }
-        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+    }
+
+    static Texture2D MakeBackgroundTex()
+    {
+        Texture2D tex = new Texture2D(1, 600);
+        for (int y = 0; y < 600; y++)
+        {
+            float t = y / 600f;
+            Color c = Color.Lerp(new Color(0.4f, 0.7f, 1f), new Color(0.7f, 0.9f, 1f), t);
+            tex.SetPixel(0, y, c);
+        }
+        tex.Apply();
+        return tex;
+    }
+
+    static Texture2D MakeGroundTex()
+    {
+        int w = 64, h = 32;
+        Texture2D tex = new Texture2D(w, h);
+        Color marron = new Color(0.55f, 0.35f, 0.15f);
+        Color verde = new Color(0.3f, 0.7f, 0.2f);
+
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                if (y >= 24)
+                    tex.SetPixel(x, y, verde);
+                else
+                    tex.SetPixel(x, y, marron);
+            }
+        }
+        tex.Apply();
+        return tex;
+    }
+
+    static Texture2D MakeBirdTex()
+    {
+        int s = 32;
+        Texture2D tex = new Texture2D(s, s);
+        Color amarillo = new Color(1f, 0.84f, 0f);
+        Color naranja = new Color(1f, 0.55f, 0f);
+        Color ala = new Color(0.9f, 0.7f, 0f);
+
+        for (int y = 0; y < s; y++)
+        {
+            for (int x = 0; x < s; x++)
+            {
+                float cx = x - 15;
+                float cy = y - 15;
+                float dist = Mathf.Sqrt(cx * cx + cy * cy);
+
+                if (dist < 13f)
+                {
+                    tex.SetPixel(x, y, amarillo);
+                }
+                else
+                {
+                    tex.SetPixel(x, y, Color.clear);
+                }
+            }
+        }
+
+        // Ala
+        for (int y = 0; y < s; y++)
+        {
+            for (int x = 0; x < s; x++)
+            {
+                float cx = x - 16;
+                float cy = y - 10;
+                if (cx > 0 && cx < 8 && cy > -3 && cy < 3)
+                {
+                    Color c = tex.GetPixel(x, y);
+                    if (c.a > 0)
+                        tex.SetPixel(x, y, ala);
+                }
+            }
+        }
+
+        // Pico
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = -2; j <= 2; j++)
+            {
+                int px = 26 + i;
+                int py = 15 + j;
+                if (px >= 0 && px < s && py >= 0 && py < s)
+                    tex.SetPixel(px, py, naranja);
+            }
+        }
+
+        tex.Apply();
+        return tex;
+    }
+
+    static Texture2D MakePipeTex()
+    {
+        int w = 52, h = 320;
+        Texture2D tex = new Texture2D(w, h);
+        Color verdeOscuro = new Color(0.2f, 0.6f, 0.15f);
+        Color verdeClaro = new Color(0.3f, 0.75f, 0.2f);
+        Color borde = new Color(0.15f, 0.4f, 0.1f);
+
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                Color c = verdeClaro;
+
+                if (x < 3 || x > w - 4)
+                    c = borde;
+                else if (x < 6 || x > w - 7)
+                    c = verdeOscuro;
+
+                // Cap inferior (para tubo de arriba)
+                if (y < 25)
+                {
+                    if (y < 5)
+                        c = borde;
+                    else if (y < 10 || (x < 6 || x > w - 7))
+                        c = verdeOscuro;
+                    else
+                        c = verdeClaro;
+                }
+
+                // Cap superior (para tubo de abajo)
+                if (y > h - 26)
+                {
+                    if (y > h - 6)
+                        c = borde;
+                    else if (y > h - 11 || (x < 6 || x > w - 7))
+                        c = verdeOscuro;
+                    else
+                        c = verdeClaro;
+                }
+
+                tex.SetPixel(x, y, c);
+            }
+        }
+        tex.Apply();
+        return tex;
     }
 }
