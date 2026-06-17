@@ -77,10 +77,14 @@ public class SceneSetupEditor : EditorWindow
             pajaro.GetComponent<SpriteRenderer>().sortingOrder = 10;
             pajaro.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezePositionX;
             pajaro.GetComponent<Rigidbody2D>().mass = 0.5f;
-            pajaro.GetComponent<CircleCollider2D>().radius = 0.4f;
+            pajaro.GetComponent<CircleCollider2D>().radius = 0.35f;
             pajaro.AddComponent<BirdController>();
             pajaro.transform.position = new Vector3(-3, 0, 0);
             pajaro.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+        }
+        else
+        {
+            pajaro.GetComponent<CircleCollider2D>().radius = 0.35f;
         }
 
         // Prefab tuberia
@@ -129,7 +133,7 @@ public class SceneSetupEditor : EditorWindow
         ps.velocidad = 3f;
         ps.minY = -2f;
         ps.maxY = 2f;
-        ps.espacio = 2.2f;
+        ps.espacio = 1.2f;
 
         // GameManager
         if (FindObjectOfType<GameManager>() == null)

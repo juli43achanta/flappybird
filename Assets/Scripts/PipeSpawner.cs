@@ -7,7 +7,7 @@ public class PipeSpawner : MonoBehaviour
     public float velocidad = 3f;
     public float minY = -2f;
     public float maxY = 2f;
-    public float espacio = 2.2f;
+    public float espacio = 1.2f;
 
     float timer;
 

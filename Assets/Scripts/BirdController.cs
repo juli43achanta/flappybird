@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class BirdController : MonoBehaviour
 {
-    public float fuerzaSalto = 6f;
+    public float fuerzaSalto = 8f;
     public float velRotacion = 8f;
 
     Rigidbody2D rb;
@@ -45,8 +45,8 @@ public class BirdController : MonoBehaviour
         float angulo = Mathf.Clamp(rb.linearVelocity.y * velRotacion, -90f, -25f);
         transform.rotation = Quaternion.Euler(0, 0, angulo);
 
-        // Morir si se sale de la pantalla
-        if (transform.position.y < -5.5f || transform.position.y > 5.5f)
+        // Morir solo si se cae por debajo del suelo
+        if (transform.position.y < -6f)
         {
             muerto = true;
             gm.Morir();
